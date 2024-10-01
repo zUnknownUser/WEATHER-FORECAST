@@ -1,22 +1,23 @@
-import Vue from 'vue';
-import Router from 'vue-router';
-import LoginPage from './components/HelloWorld.vue';
-import WeatherPage from './components/Weather.vue';
+import { createRouter, createWebHistory } from 'vue-router';
+import UserLogin from './components/UserLogin.vue';
+import WeatherForecast from './components/WeatherForecast.vue';
 
-Vue.use(Router);
+const routes = [
+  {
+    path: '/login',
+    name: 'UserLogin',
+    component: UserLogin
+  },
+  {
+    path: '/weather',
+    name: 'WeatherForecast',
+    component: WeatherForecast
+  }
+];
 
-export default new Router({
-  mode: 'history',
-  routes: [
-    {
-      path: '/',
-      name: 'Login',
-      component: LoginPage
-    },
-    {
-      path: '/weather',
-      name: 'Weather',
-      component: WeatherPage
-    }
-  ]
+const router = createRouter({
+  history: createWebHistory(),
+  routes
 });
+
+export default router;

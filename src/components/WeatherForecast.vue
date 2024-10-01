@@ -1,165 +1,208 @@
 <template>
-    <div class="weather-container">
-      <h2>Weather Forecast</h2>
-      <form @submit.prevent="fetchWeatherData">
-        <div class="input-group">
-          <label for="location">Location</label>
-          <input type="text" id="location" v-model="location" required />
-        </div>
-        <button type="submit">Get Weather</button>
-      </form>
-      <div v-if="weatherData" class="weather-data">
-        <h3>Weather Data for {{ weatherData.location.name }}</h3>
-        <p><strong>Temperature:</strong> {{ weatherData.current.temperature }}°C</p>
-        <p><strong>Weather Descriptions:</strong> {{ weatherData.current.weather_descriptions.join(', ') }}</p>
+  <div class="weather-container" v-if="weatherData.current">
+    <div class="weather-header">
+      <h1>Weather in {{ city }}</h1>
+      <p>Last Update: {{ lastUpdate }}</p>
+    </div>
+    <div class="weather-info">
+      <div class="weather-icon">
+        <img :src="weatherData.current.weather_icons[0]" alt="Weather Icon" />
+      </div>
+      <div class="weather-details">
+        <p class="temperature">{{ weatherData.current.temperature }}°C</p>
+        <p class="description">{{ weatherData.current.weather_descriptions[0] }}</p>
+        <p class="humidity">Humidity: {{ weatherData.current.humidity }}%</p>
+        <p class="wind-speed">Wind Speed: {{ weatherData.current.wind_speed }} km/h</p>
       </div>
     </div>
-  </template>
-  
-  <script>
-  import apiClient from '../axios'; 
-  
-  export default {
-    data() {
-      return {
-        location: '',
-        weatherData: null
-      };
-    },
-    methods: {
-      async fetchWeatherData() {
-        try {
-          const response = await apiClient.get('/current', {
-            params: {
-              query: this.location
-            }
-          });
-          this.weatherData = response.data;
-          console.log('Weather Data:', response.data);
-        } catch (error) {
-          console.error('Error fetching weather data:', error);
+    <div class="city-input">
+      <input v-model="city" :class="inputClass" placeholder="Enter city name" />
+      <button @click="fetchWeatherData">Get Weather</button>
+    </div>
+  </div>
+</template>
+
+<script>
+import axios from 'axios';
+
+export default {
+  data() {
+    return {
+      apiKey: '618353e8502ed150902d107b464404d7', // Substitua pela sua chave de API real
+      city: 'Manaus',
+      weatherData: {},
+      lastUpdate: '',
+    };
+  },
+  computed: {
+    inputClass() {
+      if (this.weatherData.current) {
+        const temp = this.weatherData.current.temperature;
+        if (temp <= 25) {
+          return 'cold';
+        } else if (temp >= 30) {
+          return 'hot';
+        } else {
+          return 'moderate';
         }
       }
+      return 'moderate';
     }
-  };
-  </script>
-  
-  <style scoped>
-  .weather-container {
-    max-width: 600px;
-    width: 100%;
-    margin: 0 auto;
-    padding: 2rem;
-    background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
-    border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    text-align: center;
-    transition: transform 0.3s ease-in-out;
+  },
+  methods: {
+    fetchWeatherData() {
+      axios.get(`http://api.weatherstack.com/current?access_key=${this.apiKey}&query=${this.city}`)
+        .then(response => {
+          this.weatherData = response.data;
+          this.lastUpdate = new Date().toLocaleString();
+        })
+        .catch(error => {
+          console.error(error);
+        });
+    }
+  },
+  mounted() {
+    this.fetchWeatherData();
+    setInterval(this.fetchWeatherData, 60000); // Atualiza a cada 60 segundos
   }
-  
-  .weather-container:hover {
-    transform: scale(1.05);
+};
+</script>
+
+<style scoped>
+.weather-container {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+  background: linear-gradient(to right, #6dd5fa, #2980b9);
+  color: #fff;
+  text-align: center;
+  transition: transform 0.3s ease-in-out;
+  font-family: 'Arial', sans-serif;
+}
+
+.weather-container:hover {
+  transform: translateY(-5px);
+}
+
+.weather-header {
+  margin-bottom: 20px;
+}
+
+.weather-info {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+}
+
+.weather-icon img {
+  width: 100px;
+  height: 100px;
+}
+
+.weather-details {
+  text-align: left;
+}
+
+.temperature {
+  font-size: 48px;
+  font-weight: bold;
+  color: #ffeb3b;
+  animation: move 2s infinite alternate;
+}
+
+.description {
+  font-size: 24px;
+  font-weight: bold;
+  color: #ffeb3b;
+}
+
+.humidity, .wind-speed {
+  margin: 10px 0;
+  font-size: 18px;
+  color: #fff;
+}
+
+.weather-details p {
+  transition: color 0.3s ease-in-out;
+}
+
+.weather-details p:hover {
+  color: #ffeb3b;
+}
+
+.city-input {
+  margin-top: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.city-input input {
+  padding: 10px;
+  border: 2px solid #ffeb3b;
+  border-radius: 5px 0 0 5px;
+  margin-right: -1px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  outline: none;
+  transition: border-color 0.3s ease-in-out;
+  font-family: 'Arial', sans-serif;
+  font-size: 16px;
+  color: #333;
+  background-color: #fff;
+}
+
+.city-input input:focus {
+  border-color: #ffd700;
+}
+
+.city-input button {
+  padding: 10px 20px;
+  border: 2px solid #ffeb3b;
+  border-radius: 0 5px 5px 0;
+  background-color: #ffeb3b;
+  color: #333;
+  cursor: pointer;
+  transition: background-color 0.3s ease-in-out, border-color 0.3s ease-in-out;
+  font-family: 'Arial', sans-serif;
+  font-size: 16px;
+}
+
+.city-input button:hover {
+  background-color: #ffd700;
+  border-color: #ffd700;
+}
+
+/* Classes para diferentes temperaturas */
+.cold {
+  background-color: #b3e5fc;
+  border-color: #81d4fa;
+}
+
+.hot {
+  background-color: #fff9c4;
+  border-color: #fff59d;
+}
+
+.moderate {
+  background-color: #fff;
+  border-color: #ffeb3b;
+}
+
+/* Animação para a temperatura */
+@keyframes move {
+  0% {
+    transform: translateY(0);
   }
-  
-  h2 {
-    margin-bottom: 1.5rem;
-    color: #333;
-    font-size: 2.5rem;
-    font-weight: bold;
-    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
-    transition: color 0.3s ease-in-out, text-shadow 0.3s ease-in-out;
+  100% {
+    transform: translateY(-10px);
   }
-  
-  h2:hover {
-    color: #4CAF50;
-    text-shadow: 2px 2px 4px rgba(76, 175, 80, 0.5);
-  }
-  
-  .input-group {
-    margin-bottom: 1rem;
-    text-align: left;
-  }
-  
-  label {
-    display: block;
-    margin-bottom: 0.5rem;
-    color: #555;
-    font-weight: bold;
-    transition: color 0.3s ease-in-out;
-  }
-  
-  label:hover {
-    color: #4CAF50;
-  }
-  
-  input {
-    width: 100%;
-    padding: 0.75rem;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    font-size: 1rem;
-    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
-    transition: border-color 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
-  }
-  
-  input:focus {
-    border-color: #4CAF50;
-    box-shadow: 0 0 8px rgba(76, 175, 80, 0.3);
-    outline: none;
-  }
-  
-  button {
-    width: 100%;
-    padding: 0.75rem;
-    border: none;
-    border-radius: 4px;
-    background: linear-gradient(135deg, #4CAF50, #388E3C);
-    color: white;
-    font-size: 1.2rem;
-    font-weight: bold;
-    cursor: pointer;
-    transition: background 0.3s ease-in-out, transform 0.3s ease-in-out;
-  }
-  
-  button:hover {
-    background: linear-gradient(135deg, #45a049, #2e7d32);
-    transform: translateY(-2px);
-  }
-  
-  .weather-data {
-    margin-top: 2rem;
-    padding: 1.5rem;
-    background: white;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    transition: transform 0.3s ease-in-out;
-  }
-  
-  .weather-data:hover {
-    transform: translateY(-2px);
-  }
-  
-  .weather-data h3 {
-    margin-bottom: 1rem;
-    color: #333;
-    font-size: 1.8rem;
-    font-weight: bold;
-    transition: color 0.3s ease-in-out, text-shadow 0.3s ease-in-out;
-  }
-  
-  .weather-data h3:hover {
-    color: #4CAF50;
-    text-shadow: 2px 2px 4px rgba(76, 175, 80, 0.5);
-  }
-  
-  .weather-data p {
-    margin: 0.5rem 0;
-    color: #555;
-    font-size: 1.2rem;
-    transition: color 0.3s ease-in-out;
-  }
-  
-  .weather-data p:hover {
-    color: #4CAF50;
-  }
-  </style>
+}
+
+/* Direitos Autorais */
+</style>
+<!-- Direitos Autorais -->
+<p style="text-align: center; font-size: 20px; color: #fff; margin-top: 20px;">
+  © 2023 Lucas Amorim. Todos os direitos reservados.
+</p>
